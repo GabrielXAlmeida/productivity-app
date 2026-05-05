@@ -4,8 +4,8 @@ import isoWeek from "dayjs/plugin/isoWeek";
 dayjs.extend(isoWeek);
 
 export default function WeekNav({ currentWeek, setCurrentWeek }) {
-  const startOfWeek = currentWeek.startOf("isoWeek").format("DD/MM");
-  const endOfWeek = currentWeek.endOf("isoWeek").format("DD/MM");
+  const startOfWeek = currentWeek.startOf("week").format("DD/MM");
+  const endOfWeek = currentWeek.endOf("week").format("DD/MM");
   const year = currentWeek.isoWeekYear();
 
   return (

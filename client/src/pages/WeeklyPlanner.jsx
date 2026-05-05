@@ -9,7 +9,7 @@ import WeekNav from "../components/WeekNav";
 
 dayjs.extend(isoWeek);
 
-const DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export default function WeeklyPlanner() {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function WeeklyPlanner() {
   }
 
   function getTasksForDay(dayIndex) {
-    const date = currentWeek.startOf("isoWeek").add(dayIndex, "day").format("YYYY-MM-DD");
+    const date = currentWeek.startOf("week").add(dayIndex, "day").format("YYYY-MM-DD");
     return tasks.filter((t) => t.scheduled_date === date);
   }
 
@@ -82,7 +82,7 @@ export default function WeeklyPlanner() {
 
       <div style={styles.grid}>
         {DAYS.map((day, i) => {
-          const date = currentWeek.startOf("isoWeek").add(i, "day").format("YYYY-MM-DD");
+          const date = currentWeek.startOf("week").add(i, "day").format("YYYY-MM-DD");
           const dayTasks = getTasksForDay(i);
           const isToday = date === dayjs().format("YYYY-MM-DD");
 
@@ -91,7 +91,7 @@ export default function WeeklyPlanner() {
               <div style={styles.dayHeader}>
                 <span style={styles.dayName}>{day}</span>
                 <span style={styles.dayDate}>
-                  {currentWeek.startOf("isoWeek").add(i, "day").format("DD/MM")}
+                  {currentWeek.startOf("week").add(i, "day").format("DD/MM")}
                 </span>
               </div>
 
