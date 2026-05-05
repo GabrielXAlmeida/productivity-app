@@ -104,6 +104,25 @@ export async function completeTask(req,res){
     res.json(data)
 }
 
+// PATCH /tasks/:id/reopen
+export async function reopenTask(req, res) {
+  const supabase = getSupabase();
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ status: "pending" })
+    .eq("id", id)
+    .eq("user_id", req.userId)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: "Tarefa não encontrada" });
+
+  res.json(data);
+}
+
 //helper - converts "YYYY-Www" to {startDte, endDate}
 function getWeekRange(week){
     const [yearStr, weekStr] = week.split("-W")

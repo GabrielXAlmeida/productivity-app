@@ -10,7 +10,7 @@ const PRIORITY_LABELS = {
   low: "Baixa",
 };
 
-export default function TaskCard({ task, onEdit, onDelete, onComplete }) {
+export default function TaskCard({ task, onEdit, onDelete, onComplete, onReopen }) {
   const isCompleted = task.status === "completed";
 
   return (
@@ -40,7 +40,11 @@ export default function TaskCard({ task, onEdit, onDelete, onComplete }) {
         <p style={styles.description}>{task.description}</p>
       )}
 
-      {!isCompleted && (
+      {isCompleted ? (
+        <button style={styles.reopenBtn} onClick={() => onReopen(task.id)}>
+          ↩ Reabrir
+        </button>
+      ) : (
         <div style={styles.actions}>
           <button style={styles.editBtn} onClick={() => onEdit(task)}>
             Editar
@@ -130,5 +134,15 @@ const styles = {
     color: "#fff",
     cursor: "pointer",
     fontSize: "0.75rem",
+  },
+  reopenBtn: {
+    padding: "0.25rem",
+    borderRadius: "6px",
+    border: "1px solid #999",
+    background: "transparent",
+    color: "#666",
+    cursor: "pointer",
+    fontSize: "0.75rem",
+    width: "100%",
   },
 };

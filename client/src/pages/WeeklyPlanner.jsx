@@ -61,6 +61,11 @@ export default function WeeklyPlanner() {
     fetchTasks();
   }
 
+  async function handleReopenTask(id) {
+    await api.patch(`/tasks/${id}/reopen`);
+    fetchTasks();
+  }
+
   function handleLogout() {
     localStorage.removeItem("token");
     navigate("/login");
@@ -68,16 +73,13 @@ export default function WeeklyPlanner() {
 
   return (
     <div style={styles.page}>
-      {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>📅 Weekly Planner</h1>
         <button style={styles.logoutBtn} onClick={handleLogout}>Sair</button>
       </div>
 
-      {/* Navegação de semana */}
       <WeekNav currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} />
 
-      {/* Grade de dias */}
       <div style={styles.grid}>
         {DAYS.map((day, i) => {
           const date = currentWeek.startOf("isoWeek").add(i, "day").format("YYYY-MM-DD");
@@ -101,6 +103,7 @@ export default function WeeklyPlanner() {
                     onEdit={handleEditTask}
                     onDelete={handleDeleteTask}
                     onComplete={handleCompleteTask}
+                    onReopen={handleReopenTask}
                   />
                 ))}
               </div>
@@ -113,7 +116,6 @@ export default function WeeklyPlanner() {
         })}
       </div>
 
-      {/* Modal */}
       {modalOpen && (
         <TaskModal
           task={editingTask}
