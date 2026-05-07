@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-export default function HabitCard({ habit, checkedToday, streak, onToggleCheckin, onDelete, onEdit }) {
+export default function HabitCard({
+  habit,
+  checkedToday,
+  streak,
+  onToggleCheckin,
+  onDelete,
+  onEdit,
+}) {
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
@@ -14,13 +21,32 @@ export default function HabitCard({ habit, checkedToday, streak, onToggleCheckin
       <div style={styles.top}>
         <div style={styles.info}>
           <span style={styles.name}>{habit.name}</span>
-          {habit.category && (
-            <span style={styles.category}>{habit.category}</span>
-          )}
+          <div style={styles.tags}>
+            {habit.category && (
+              <span style={styles.category}>{habit.category}</span>
+            )}
+            {habit.rest_days_allowed > 0 && (
+              <span style={styles.rest}>
+                😴 {habit.rest_days_allowed} desc/sem
+              </span>
+            )}
+          </div>
         </div>
         <div style={styles.actions}>
-          <button style={styles.iconBtn} onClick={() => onEdit(habit)} title="Editar">✏️</button>
-          <button style={styles.iconBtn} onClick={() => onDelete(habit.id)} title="Deletar">🗑️</button>
+          <button
+            style={styles.iconBtn}
+            onClick={() => onEdit(habit)}
+            title="Editar"
+          >
+            ✏️
+          </button>
+          <button
+            style={styles.iconBtn}
+            onClick={() => onDelete(habit.id)}
+            title="Deletar"
+          >
+            🗑️
+          </button>
         </div>
       </div>
 
@@ -32,7 +58,10 @@ export default function HabitCard({ habit, checkedToday, streak, onToggleCheckin
         </div>
 
         <button
-          style={{ ...styles.checkBtn, ...(checkedToday ? styles.checkBtnDone : {}) }}
+          style={{
+            ...styles.checkBtn,
+            ...(checkedToday ? styles.checkBtnDone : {}),
+          }}
           onClick={handleToggle}
           disabled={loading}
         >
@@ -68,8 +97,13 @@ const styles = {
   info: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.2rem",
+    gap: "0.3rem",
     flex: 1,
+  },
+  tags: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.3rem",
   },
   name: {
     fontWeight: "700",
@@ -82,8 +116,14 @@ const styles = {
     background: "#f0f0f0",
     borderRadius: "20px",
     padding: "0.15rem 0.5rem",
-    width: "fit-content",
     textTransform: "capitalize",
+  },
+  rest: {
+    fontSize: "0.72rem",
+    color: "#aaa",
+    background: "#f7f7f7",
+    borderRadius: "20px",
+    padding: "0.15rem 0.5rem",
   },
   actions: {
     display: "flex",

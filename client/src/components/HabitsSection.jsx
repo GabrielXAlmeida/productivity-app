@@ -9,7 +9,12 @@ export default function HabitsSection() {
   const [checkedToday, setCheckedToday] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
-  const [form, setForm] = useState({ name: "", category: "", target_days: "" });
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    target_days: "",
+    rest_days_allowed: "",
+  });
   const [loading, setLoading] = useState(true);
 
   const today = dayjs().format("YYYY-MM-DD");
@@ -58,7 +63,9 @@ export default function HabitsSection() {
 
   async function fetchTodayCheckin(habitId) {
     try {
-      const res = await api.get(`/checkins?habitId=${habitId}&month=${thisMonth}`);
+      const res = await api.get(
+        `/checkins?habitId=${habitId}&month=${thisMonth}`,
+      );
       const todayEntry = res.data.find((c) => c.checked_date === today);
       return todayEntry ? todayEntry.id : null;
     } catch {
@@ -71,9 +78,15 @@ export default function HabitsSection() {
       const checkinId = checkedToday[habitId];
       await api.delete(`/checkins/${checkinId}`);
       setCheckedToday((prev) => ({ ...prev, [habitId]: null }));
-      setStreaks((prev) => ({ ...prev, [habitId]: Math.max(0, (prev[habitId] || 1) - 1) }));
+      setStreaks((prev) => ({
+        ...prev,
+        [habitId]: Math.max(0, (prev[habitId] || 1) - 1),
+      }));
     } else {
-      const res = await api.post("/checkins", { habit_id: habitId, checked_date: today });
+      const res = await api.post("/checkins", {
+        habit_id: habitId,
+        checked_date: today,
+      });
       setCheckedToday((prev) => ({ ...prev, [habitId]: res.data.id }));
       setStreaks((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) + 1 }));
     }
@@ -91,13 +104,14 @@ export default function HabitsSection() {
       name: habit.name,
       category: habit.category || "",
       target_days: habit.target_days ?? "",
+      rest_days_allowed: habit.rest_days_allowed ?? "",
     });
     setModalOpen(true);
   }
 
   function handleNewHabit() {
     setEditingHabit(null);
-    setForm({ name: "", category: "", target_days: "" });
+    setForm({ name: "", category: "", target_days: "", rest_days_allowed: "" }); // ← adiciona rest_days_allowed
     setModalOpen(true);
   }
 
@@ -108,12 +122,16 @@ export default function HabitsSection() {
       name: form.name.trim(),
       category: form.category.trim() || null,
       target_days: form.target_days !== "" ? parseInt(form.target_days) : null,
+      rest_days_allowed:
+        form.rest_days_allowed !== "" ? parseInt(form.rest_days_allowed) : 0,
     };
 
     if (editingHabit) {
       const res = await api.put(`/habits/${editingHabit.id}`, payload);
       // atualiza só o hábito editado localmente, sem refazer fetchAll
-      setHabits((prev) => prev.map((h) => h.id === editingHabit.id ? res.data : h));
+      setHabits((prev) =>
+        prev.map((h) => (h.id === editingHabit.id ? res.data : h)),
+      );
     } else {
       await api.post("/habits", payload);
       fetchAll();
@@ -130,13 +148,17 @@ export default function HabitsSection() {
     <div style={styles.section}>
       <div style={styles.header}>
         <h2 style={styles.title}>🌱 Hábitos</h2>
-        <button style={styles.addBtn} onClick={handleNewHabit}>+ Novo hábito</button>
+        <button style={styles.addBtn} onClick={handleNewHabit}>
+          + Novo hábito
+        </button>
       </div>
 
       {habits.length === 0 ? (
         <div style={styles.empty}>
           <p>Nenhum hábito cadastrado ainda.</p>
-          <button style={styles.addBtnEmpty} onClick={handleNewHabit}>Criar meu primeiro hábito</button>
+          <button style={styles.addBtnEmpty} onClick={handleNewHabit}>
+            Criar meu primeiro hábito
+          </button>
         </div>
       ) : (
         <div style={styles.grid}>
@@ -174,7 +196,9 @@ export default function HabitsSection() {
               style={styles.input}
               placeholder="Ex: saúde, estudo..."
               value={form.category}
-              onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, category: e.target.value }))
+              }
             />
 
             <label style={styles.label}>Meta (dias por semana)</label>
@@ -185,11 +209,31 @@ export default function HabitsSection() {
               max="7"
               placeholder="Ex: 5"
               value={form.target_days}
-              onChange={(e) => setForm((p) => ({ ...p, target_days: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, target_days: e.target.value }))
+              }
+            />
+
+            <label style={styles.label}>Dias de descanso por semana</label>
+            <input
+              style={styles.input}
+              type="number"
+              min="0"
+              max="6"
+              placeholder="Ex: 2 (0 = nenhum)"
+              value={form.rest_days_allowed}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, rest_days_allowed: e.target.value }))
+              }
             />
 
             <div style={styles.modalActions}>
-              <button style={styles.cancelBtn} onClick={() => setModalOpen(false)}>Cancelar</button>
+              <button
+                style={styles.cancelBtn}
+                onClick={() => setModalOpen(false)}
+              >
+                Cancelar
+              </button>
               <button style={styles.saveBtn} onClick={handleSave}>
                 {editingHabit ? "Salvar" : "Criar"}
               </button>
