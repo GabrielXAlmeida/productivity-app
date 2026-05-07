@@ -2,6 +2,8 @@ import { getSupabase } from '../db/supabase.js';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek.js';
 dayjs.extend(isoWeek);
+import { awardXp, unlockAchievement, XP_REWARDS } from './xpController.js';
+import { checkStreakAchievements } from './achievementsController.js';
 
 // ── HABITS ──────────────────────────────────────────────
 
@@ -103,28 +105,40 @@ export async function getCheckins(req, res) {
 export async function createCheckin(req, res) {
   const userId = req.userId;
   const { habit_id, checked_date } = req.body;
-  const supabase = getSupabase()
+  const supabase = getSupabase();
 
   if (!habit_id || !checked_date)
     return res.status(400).json({ error: 'habit_id e checked_date são obrigatórios.' });
 
-  // evita duplicata
   const { data: existing } = await supabase
     .from('habit_checkins')
     .select('id')
     .eq('habit_id', habit_id)
     .eq('user_id', userId)
-    .eq('checked_date', checked_date)
+    .eq('checked_date', checked_date);
 
-  if (existing && existing.length > 0) return res.status(409).json({ error: 'Check-in já registrado nessa data.' });
+  if (existing && existing.length > 0)
+    return res.status(409).json({ error: 'Check-in já registrado nessa data.' });
 
   const { data, error } = await supabase
     .from('habit_checkins')
     .insert([{ habit_id, user_id: userId, checked_date }])
-    .select()
-    
+    .select();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Concede XP pelo check-in
+  await awardXp(userId, XP_REWARDS.HABIT_CHECKIN);
+
+  // Verifica conquista de primeiro check-in
+  const { count } = await supabase
+    .from('habit_checkins')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (count === 1) await unlockAchievement(userId, 'first_checkin');
+  await checkStreakAchievements(userId, habit_id);
+
   return res.status(201).json(data[0]);
 }
 

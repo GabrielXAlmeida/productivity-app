@@ -1,4 +1,9 @@
+import { checkAllWeekTasksAchievement } from './achievementsController.js';
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek.js';
+dayjs.extend(isoWeek);
 import { getSupabase } from "../db/supabase.js";
+import { awardXp, unlockAchievement, XP_REWARDS } from './xpController.js';
 
 // get /task?week=YYYY-Www
 export async function getTasks(req, res) {
@@ -86,22 +91,48 @@ export async function deleteTask(req,res){
 }
 
 // patch /tasks/:id/complete
-export async function completeTask(req,res){
-    const supabse = getSupabase()
-    const { id } = req.params
+export async function completeTask(req, res) {
+  const supabase = getSupabase();
+  const { id } = req.params;
 
-    const {data, error} = await supabse
-    .from("tasks")
-    .update({status: "completed"})
-    .eq("id", id)
-    .eq("user_id", req.userId)
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ status: 'completed' })
+    .eq('id', id)
+    .eq('user_id', req.userId)
     .select()
-    .single()
+    .single();
 
-    if(error) return res.status(500).json({error: error.message})
-    if(!data) return res.status(404).json({error: "Task not found"})
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Task not found' });
 
-    res.json(data)
+  // Concede XP conforme prioridade
+  const xpMap = {
+    high:   XP_REWARDS.TASK_COMPLETE_HIGH,
+    medium: XP_REWARDS.TASK_COMPLETE_MEDIUM,
+    low:    XP_REWARDS.TASK_COMPLETE_LOW,
+  };
+  const xpAmount = xpMap[data.priority] ?? XP_REWARDS.TASK_COMPLETE_MEDIUM;
+  await awardXp(req.userId, xpAmount);
+
+  // Verifica conquistas de tarefas
+  const { count } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', req.userId)
+    .eq('status', 'completed');
+
+  if (count === 1)  await unlockAchievement(req.userId, 'first_task');
+  if (count === 10) await unlockAchievement(req.userId, 'task_10');
+  if (count === 50) await unlockAchievement(req.userId, 'task_50');
+
+  if (data.scheduled_date) {
+  const weekStart = dayjs(data.scheduled_date).startOf('isoWeek').format('YYYY-MM-DD');
+  const weekEnd   = dayjs(data.scheduled_date).endOf('isoWeek').format('YYYY-MM-DD');
+  await checkAllWeekTasksAchievement(req.userId, weekStart, weekEnd);
+}
+
+  res.json(data);
 }
 
 // PATCH /tasks/:id/reopen
