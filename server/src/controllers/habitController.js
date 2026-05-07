@@ -55,6 +55,23 @@ export async function deleteHabit(req, res) {
   return res.status(204).send();
 }
 
+export async function updateHabit(req, res) {
+  const userId = req.userId;
+  const { id } = req.params;
+  const { name, category, target_days } = req.body;
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('habits')
+    .update({ name, category, target_days })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data[0]);
+}
+
 // ── CHECK-INS ────────────────────────────────────────────
 
 export async function getCheckins(req, res) {
