@@ -8,3 +8,12 @@ body {
   background: #f0f2f5;
   font-family: sans-serif;
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

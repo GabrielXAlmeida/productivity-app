@@ -10,7 +10,15 @@ import HabitsSection from "../components/HabitsSection";
 
 dayjs.extend(isoWeek);
 
-const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const DAYS = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+];
 
 const fadeInStyle = `
   @keyframes fadeInUp {
@@ -52,7 +60,10 @@ export default function WeeklyPlanner() {
   }
 
   function getTasksForDay(dayIndex) {
-    const date = currentWeek.startOf("week").add(dayIndex, "day").format("YYYY-MM-DD");
+    const date = currentWeek
+      .startOf("week")
+      .add(dayIndex, "day")
+      .format("YYYY-MM-DD");
     return tasks.filter((t) => t.scheduled_date === date);
   }
 
@@ -92,19 +103,35 @@ export default function WeeklyPlanner() {
     <div style={styles.page}>
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>📅 Weekly Planner</h1>
-        <button style={styles.logoutBtn} onClick={handleLogout}>Sair</button>
+        <div style={styles.headerActions}>
+          <button
+            style={styles.dashboardBtn}
+            onClick={() => navigate("/dashboard")}
+          >
+            📊 Dashboard
+          </button>
+          <button style={styles.logoutBtn} onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
       <div style={styles.tabs}>
         <button
-          style={{ ...styles.tab, ...(activeTab === "planner" ? styles.tabActive : {}) }}
+          style={{
+            ...styles.tab,
+            ...(activeTab === "planner" ? styles.tabActive : {}),
+          }}
           onClick={() => setActiveTab("planner")}
         >
           📋 Planner
         </button>
         <button
-          style={{ ...styles.tab, ...(activeTab === "habits" ? styles.tabActive : {}) }}
+          style={{
+            ...styles.tab,
+            ...(activeTab === "habits" ? styles.tabActive : {}),
+          }}
           onClick={() => setActiveTab("habits")}
         >
           🌱 Hábitos
@@ -115,20 +142,35 @@ export default function WeeklyPlanner() {
       <div key={activeTab} style={styles.tabContent}>
         {activeTab === "planner" && (
           <>
-            <WeekNav currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} />
+            <WeekNav
+              currentWeek={currentWeek}
+              setCurrentWeek={setCurrentWeek}
+            />
 
             <div style={styles.grid}>
               {DAYS.map((day, i) => {
-                const date = currentWeek.startOf("week").add(i, "day").format("YYYY-MM-DD");
+                const date = currentWeek
+                  .startOf("week")
+                  .add(i, "day")
+                  .format("YYYY-MM-DD");
                 const dayTasks = getTasksForDay(i);
                 const isToday = date === dayjs().format("YYYY-MM-DD");
 
                 return (
-                  <div key={day} style={{ ...styles.column, ...(isToday ? styles.todayColumn : {}) }}>
+                  <div
+                    key={day}
+                    style={{
+                      ...styles.column,
+                      ...(isToday ? styles.todayColumn : {}),
+                    }}
+                  >
                     <div style={styles.dayHeader}>
                       <span style={styles.dayName}>{day}</span>
                       <span style={styles.dayDate}>
-                        {currentWeek.startOf("week").add(i, "day").format("DD/MM")}
+                        {currentWeek
+                          .startOf("week")
+                          .add(i, "day")
+                          .format("DD/MM")}
                       </span>
                     </div>
 
@@ -145,7 +187,10 @@ export default function WeeklyPlanner() {
                       ))}
                     </div>
 
-                    <button style={styles.addBtn} onClick={() => handleNewTask(date)}>
+                    <button
+                      style={styles.addBtn}
+                      onClick={() => handleNewTask(date)}
+                    >
                       + Adicionar
                     </button>
                   </div>
@@ -272,5 +317,20 @@ const styles = {
     color: "#999",
     cursor: "pointer",
     fontSize: "0.8rem",
+  },
+  headerActions: {
+    display: "flex",
+    gap: "0.5rem",
+    alignItems: "center",
+  },
+  dashboardBtn: {
+    padding: "0.4rem 1rem",
+    borderRadius: "8px",
+    border: "2px solid #6c63ff",
+    background: "transparent",
+    color: "#6c63ff",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "0.85rem",
   },
 };
