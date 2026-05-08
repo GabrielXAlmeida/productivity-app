@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const PRIORITY_COLORS = {
   high: "#ff4d4d",
   medium: "#ffaa00",
@@ -10,51 +12,100 @@ const PRIORITY_LABELS = {
   low: "Baixa",
 };
 
-export default function TaskCard({ task, onEdit, onDelete, onComplete, onReopen }) {
+export default function TaskCard({
+  task,
+  onEdit,
+  onDelete,
+  onComplete,
+  onReopen,
+}) {
   const isCompleted = task.status === "completed";
+  const [imgOpen, setImgOpen] = useState(false);
 
   return (
-    <div style={{ ...styles.card, ...(isCompleted ? styles.completed : {}) }}>
-      <div style={styles.topRow}>
-        <span
+    <>
+      <div style={{ ...styles.card, ...(isCompleted ? styles.completed : {}) }}>
+        <div style={styles.topRow}>
+          <span
+            style={{
+              ...styles.priority,
+              background: PRIORITY_COLORS[task.priority] || "#ccc",
+            }}
+          >
+            {PRIORITY_LABELS[task.priority] || task.priority}
+          </span>
+
+          <div style={styles.topActions}>
+            {task.image_url && (
+              <button
+                style={styles.imgBtn}
+                onClick={() => setImgOpen(true)}
+                title="Ver imagem"
+              >
+                📷
+              </button>
+            )}
+            {!isCompleted && (
+              <button
+                style={styles.completeBtn}
+                onClick={() => onComplete(task.id)}
+                title="Concluir"
+              >
+                ✓
+              </button>
+            )}
+          </div>
+        </div>
+
+        <p
           style={{
-            ...styles.priority,
-            background: PRIORITY_COLORS[task.priority] || "#ccc",
+            ...styles.title,
+            ...(isCompleted ? styles.strikethrough : {}),
           }}
         >
-          {PRIORITY_LABELS[task.priority] || task.priority}
-        </span>
+          {task.title}
+        </p>
 
-        {!isCompleted && (
-          <button style={styles.completeBtn} onClick={() => onComplete(task.id)} title="Concluir">
-            ✓
+        {task.description && (
+          <p style={styles.description}>{task.description}</p>
+        )}
+
+        {isCompleted ? (
+          <button style={styles.reopenBtn} onClick={() => onReopen(task.id)}>
+            ↩ Reabrir
           </button>
+        ) : (
+          <div style={styles.actions}>
+            <button style={styles.editBtn} onClick={() => onEdit(task)}>
+              Editar
+            </button>
+            <button style={styles.deleteBtn} onClick={() => onDelete(task.id)}>
+              Excluir
+            </button>
+          </div>
         )}
       </div>
 
-      <p style={{ ...styles.title, ...(isCompleted ? styles.strikethrough : {}) }}>
-        {task.title}
-      </p>
-
-      {task.description && (
-        <p style={styles.description}>{task.description}</p>
-      )}
-
-      {isCompleted ? (
-        <button style={styles.reopenBtn} onClick={() => onReopen(task.id)}>
-          ↩ Reabrir
-        </button>
-      ) : (
-        <div style={styles.actions}>
-          <button style={styles.editBtn} onClick={() => onEdit(task)}>
-            Editar
-          </button>
-          <button style={styles.deleteBtn} onClick={() => onDelete(task.id)}>
-            Excluir
-          </button>
+      {/* Lightbox da imagem */}
+      {imgOpen && (
+        <div style={styles.lightboxOverlay} onClick={() => setImgOpen(false)}>
+          <div style={styles.lightboxBox} onClick={(e) => e.stopPropagation()}>
+            <button
+              style={styles.lightboxClose}
+              onClick={() => setImgOpen(false)}
+            >
+              ✕
+            </button>
+            <img
+              src={task.image_url}
+              alt="Imagem da tarefa"
+              style={styles.lightboxImg}
+            />
+            <p style={styles.lightboxTitle}>{task.title}</p>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -83,6 +134,19 @@ const styles = {
     padding: "0.15rem 0.5rem",
     borderRadius: "20px",
     fontWeight: "bold",
+  },
+  topActions: {
+    display: "flex",
+    gap: "0.25rem",
+    alignItems: "center",
+  },
+  imgBtn: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    padding: "0 2px",
+    lineHeight: 1,
   },
   completeBtn: {
     background: "#00c853",
@@ -144,5 +208,50 @@ const styles = {
     cursor: "pointer",
     fontSize: "0.75rem",
     width: "100%",
+  },
+
+  // Lightbox
+  lightboxOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.75)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 200,
+  },
+  lightboxBox: {
+    background: "#fff",
+    borderRadius: "12px",
+    padding: "1.25rem",
+    width: "min(600px, 90vw)",
+    maxHeight: "90vh",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+    position: "relative",
+  },
+  lightboxClose: {
+    alignSelf: "flex-end",
+    background: "transparent",
+    border: "1px solid #eee",
+    borderRadius: "6px",
+    fontSize: "0.9rem",
+    cursor: "pointer",
+    color: "#888",
+    padding: "0.2rem 0.6rem",
+    marginBottom: "-0.25rem",
+  },
+  lightboxImg: {
+    width: "100%",
+    maxHeight: "80vh",
+    objectFit: "contain",
+    borderRadius: "8px",
+  },
+  lightboxTitle: {
+    fontSize: "0.9rem",
+    color: "#555",
+    margin: 0,
+    textAlign: "center",
   },
 };

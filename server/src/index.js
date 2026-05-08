@@ -10,6 +10,7 @@ import checkinRoutes from './routes/checkins.js';
 import statsRoutes from './routes/stats.js';
 import xpRoutes    from './routes/xp.js';
 import achievementsRoutes from './routes/achievements.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -24,6 +25,7 @@ app.use('/checkins', checkinRoutes);
 app.use('/stats', statsRoutes);
 app.use('/xp',    xpRoutes);
 app.use('/achievements', achievementsRoutes);
+app.use('/tasks', uploadRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Server is running!' })
