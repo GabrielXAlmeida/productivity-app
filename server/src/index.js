@@ -3,33 +3,49 @@ dotenv.config()
 
 import express from 'express'
 import cors from 'cors'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import authRoutes from './routes/auth.js'
 import taskRoutes from './routes/tasks.js'
-import habitRoutes from './routes/habits.js';
-import checkinRoutes from './routes/checkins.js';
-import statsRoutes from './routes/stats.js';
-import xpRoutes    from './routes/xp.js';
-import achievementsRoutes from './routes/achievements.js';
-import uploadRoutes from './routes/upload.js';
+import habitRoutes from './routes/habits.js'
+import checkinRoutes from './routes/checkins.js'
+import statsRoutes from './routes/stats.js'
+import xpRoutes from './routes/xp.js'
+import achievementsRoutes from './routes/achievements.js'
+import uploadRoutes from './routes/upload.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 app.use(cors())
 app.use(express.json())
 
 app.use('/auth', authRoutes)
 app.use('/tasks', taskRoutes)
-app.use('/habits', habitRoutes);
-app.use('/checkins', checkinRoutes);
-app.use('/stats', statsRoutes);
-app.use('/xp',    xpRoutes);
-app.use('/achievements', achievementsRoutes);
-app.use('/tasks', uploadRoutes);
+app.use('/habits', habitRoutes)
+app.use('/checkins', checkinRoutes)
+app.use('/stats', statsRoutes)
+app.use('/xp', xpRoutes)
+app.use('/achievements', achievementsRoutes)
+app.use('/tasks', uploadRoutes)
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Server is running!' })
-})
+// Servir o frontend em produção
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = join(__dirname, '../../client/dist')
+  app.use(express.static(clientDist))
+
+  // Qualquer rota não reconhecida pela API devolve o index.html (SPA)
+  app.get('*', (req, res) => {
+    res.sendFile(join(clientDist, 'index.html'))
+  })
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' })
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
