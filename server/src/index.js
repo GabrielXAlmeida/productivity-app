@@ -20,7 +20,12 @@ const PORT = process.env.PORT || 3000
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-app.use(cors())
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://productivity-app-jagh.onrender.com'
+  ]
+}))
 app.use(express.json())
 
 app.use('/auth', authRoutes)
