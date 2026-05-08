@@ -70,6 +70,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     background: "#f0f2f5",
+    padding: "1rem", 
   },
   card: {
     background: "#fff",

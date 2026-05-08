@@ -185,6 +185,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 100,
+    padding: "1rem", 
   },
   modal: {
     background: "#fff",
