@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(clientDist))
 
   // Qualquer rota não reconhecida pela API devolve o index.html (SPA)
-  app.get('*', (req, res) => {
+  app.get('/{*path}', (req, res) => {
     res.sendFile(join(clientDist, 'index.html'))
   })
 } else {
