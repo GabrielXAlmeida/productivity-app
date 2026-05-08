@@ -33,13 +33,10 @@ app.use('/achievements', achievementsRoutes)
 app.use('/tasks', uploadRoutes)
 
 // Servir o frontend em produção
+// Servir o frontend em produção
 if (process.env.NODE_ENV === 'production') {
-  const clientDist = join(__dirname, '../../client/dist')
-  app.use(express.static(clientDist))
-
-  // Qualquer rota não reconhecida pela API devolve o index.html (SPA)
   app.get('/{*path}', (req, res) => {
-    res.sendFile(join(clientDist, 'index.html'))
+    res.json({ message: 'Use the frontend URL' })
   })
 } else {
   app.get('/', (req, res) => {
