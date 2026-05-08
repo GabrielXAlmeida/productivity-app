@@ -10,6 +10,13 @@ export default function Dashboard() {
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    function handleResize() { setIsMobile(window.innerWidth < 640); }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     async function fetchAll() {
@@ -33,31 +40,23 @@ export default function Dashboard() {
     fetchAll();
   }, []);
 
-  if (loading)
-    return (
-      <div style={styles.page}>
-        <p style={styles.loadingText}>Carregando...</p>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div style={styles.page}>
-        <p style={{ color: "#ff4d4d" }}>{error}</p>
-      </div>
-    );
+  if (loading) return <div style={styles.page}><p style={styles.loadingText}>Carregando...</p></div>;
+  if (error)   return <div style={styles.page}><p style={{ color: "#ff4d4d" }}>{error}</p></div>;
 
   const { total_xp = 0, level = 1, xp_in_level = 0, xp_for_next = 100 } = xp || {};
   const xpPct = Math.min(100, Math.round((xp_in_level / xp_for_next) * 100));
 
   const unlocked = achievements.filter((a) => a.unlocked);
-  const locked = achievements.filter((a) => !a.unlocked);
+  const locked   = achievements.filter((a) => !a.unlocked);
 
   const priorityConfig = {
     high:   { label: "Alta",  color: "#ef4444" },
     medium: { label: "Média", color: "#f59e0b" },
     low:    { label: "Baixa", color: "#10b981" },
   };
+
+  // Em mobile, rows viram colunas
+  const row = isMobile ? styles.rowMobile : styles.row;
 
   return (
     <div style={styles.page}>
@@ -75,7 +74,7 @@ export default function Dashboard() {
       <div style={styles.content}>
 
         {/* Linha 1 — XP + Stats semanais */}
-        <div style={styles.row}>
+        <div style={row}>
 
           {/* XP */}
           <div style={{ ...styles.card, flex: 1 }}>
@@ -94,13 +93,13 @@ export default function Dashboard() {
           </div>
 
           {/* Stats semanais */}
-          <div style={{ ...styles.card, flex: 2 }}>
+          <div style={{ ...styles.card, flex: isMobile ? 1 : 2 }}>
             <p style={styles.cardLabel}>Tarefas desta semana</p>
             <div style={styles.statsRow}>
               {[
-                { icon: "✅", label: "Concluídas", value: weeklyStats?.completed ?? 0,            color: "#10b981" },
-                { icon: "⏳", label: "Pendentes",  value: weeklyStats?.pending ?? 0,              color: "#f59e0b" },
-                { icon: "📋", label: "Total",      value: weeklyStats?.total ?? 0,                color: "#6c63ff" },
+                { icon: "✅", label: "Concluídas", value: weeklyStats?.completed ?? 0,             color: "#10b981" },
+                { icon: "⏳", label: "Pendentes",  value: weeklyStats?.pending ?? 0,               color: "#f59e0b" },
+                { icon: "📋", label: "Total",      value: weeklyStats?.total ?? 0,                 color: "#6c63ff" },
                 { icon: "🎯", label: "Taxa",       value: `${weeklyStats?.completion_rate ?? 0}%`, color: "#ec4899" },
               ].map((s) => (
                 <div key={s.label} style={styles.statBox}>
@@ -134,7 +133,7 @@ export default function Dashboard() {
         </div>
 
         {/* Linha 2 — Hábitos + Conquistas */}
-        <div style={styles.row}>
+        <div style={row}>
 
           {/* Hábitos */}
           <div style={{ ...styles.card, flex: 1 }}>
@@ -167,12 +166,15 @@ export default function Dashboard() {
           </div>
 
           {/* Conquistas */}
-          <div style={{ ...styles.card, flex: 1.4 }}>
+          <div style={{ ...styles.card, flex: isMobile ? 1 : 1.4 }}>
             <div style={styles.achHeader}>
               <p style={styles.cardLabel}>🏆 Conquistas</p>
               <span style={styles.achBadge}>{unlocked.length}/{achievements.length}</span>
             </div>
-            <div style={styles.achGrid}>
+            <div style={{
+              ...styles.achGrid,
+              gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(4, 1fr)",
+            }}>
               {[...unlocked, ...locked].map((a) => (
                 <div
                   key={a.key}
@@ -203,18 +205,15 @@ const styles = {
   page: {
     minHeight: "100vh",
     background: "#f0f2f5",
-    padding: "1.5rem",
+    padding: "1rem 1.25rem",
   },
-  loadingText: {
-    color: "#999",
-  },
+  loadingText: { color: "#999" },
 
-  // Header
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "1.25rem",
+    marginBottom: "1rem",
   },
   headerLeft: {
     display: "flex",
@@ -222,46 +221,52 @@ const styles = {
     gap: "0.75rem",
   },
   backBtn: {
-    padding: "0.4rem 1rem",
+    padding: "0.4rem 0.9rem",
     borderRadius: "8px",
     border: "2px solid #6c63ff",
     background: "transparent",
     color: "#6c63ff",
     cursor: "pointer",
     fontWeight: "bold",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
   },
   headerTitle: {
-    fontSize: "1.5rem",
+    fontSize: "1.3rem",
     color: "#333",
     margin: 0,
   },
 
-  // Layout
   content: {
     display: "flex",
     flexDirection: "column",
     gap: "1rem",
   },
+
+  // Rows
   row: {
     display: "flex",
     gap: "1rem",
     alignItems: "stretch",
+  },
+  rowMobile: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
   },
 
   // Card base
   card: {
     background: "#fff",
     borderRadius: "12px",
-    padding: "1.25rem",
+    padding: "1rem 1.1rem",
     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   },
   cardLabel: {
-    fontSize: "0.72rem",
+    fontSize: "0.7rem",
     color: "#aaa",
     textTransform: "uppercase",
     letterSpacing: "0.06em",
-    margin: "0 0 0.75rem",
+    margin: "0 0 0.65rem",
     fontWeight: "600",
   },
 
@@ -270,7 +275,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: "0.75rem",
+    marginBottom: "0.65rem",
   },
   xpLevel: {
     fontSize: "1.4rem",
@@ -297,63 +302,54 @@ const styles = {
   xpFooter: {
     display: "flex",
     justifyContent: "space-between",
-    marginTop: "0.5rem",
+    marginTop: "0.4rem",
   },
   xpSub: {
-    fontSize: "0.7rem",
+    fontSize: "0.68rem",
     color: "#ccc",
   },
 
   // Stats
   statsRow: {
     display: "flex",
-    gap: "0.5rem",
-    marginBottom: "1rem",
+    gap: "0.4rem",
+    marginBottom: "0.85rem",
   },
   statBox: {
     flex: 1,
     background: "#f8f8fb",
     borderRadius: "10px",
-    padding: "0.75rem 0.5rem",
+    padding: "0.6rem 0.3rem",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "0.2rem",
+    gap: "0.15rem",
   },
-  statIcon: {
-    fontSize: "1.1rem",
-  },
+  statIcon: { fontSize: "1rem" },
   statValue: {
-    fontSize: "1.3rem",
+    fontSize: "1.2rem",
     fontWeight: "700",
     lineHeight: 1,
   },
   statLabel: {
-    fontSize: "0.68rem",
+    fontSize: "0.62rem",
     color: "#aaa",
+    textAlign: "center",
   },
 
   // Priority
   priorityRow: {
     display: "flex",
-    gap: "0.75rem",
+    gap: "0.6rem",
   },
-  priorityItem: {
-    flex: 1,
-  },
+  priorityItem: { flex: 1 },
   priorityTop: {
     display: "flex",
     justifyContent: "space-between",
     marginBottom: "4px",
   },
-  priorityLabel: {
-    fontSize: "0.7rem",
-    color: "#aaa",
-  },
-  priorityPct: {
-    fontSize: "0.7rem",
-    fontWeight: "700",
-  },
+  priorityLabel: { fontSize: "0.68rem", color: "#aaa" },
+  priorityPct:   { fontSize: "0.68rem", fontWeight: "700" },
   miniTrack: {
     height: "4px",
     background: "#eee",
@@ -370,19 +366,19 @@ const styles = {
   habitList: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.65rem",
+    gap: "0.6rem",
   },
   habitRow: {
     display: "flex",
     alignItems: "center",
-    gap: "0.75rem",
+    gap: "0.65rem",
   },
   habitInfo: {
-    width: "120px",
+    width: "110px",
     flexShrink: 0,
   },
   habitName: {
-    fontSize: "0.82rem",
+    fontSize: "0.8rem",
     color: "#333",
     fontWeight: "500",
     display: "block",
@@ -391,7 +387,7 @@ const styles = {
     textOverflow: "ellipsis",
   },
   habitCat: {
-    fontSize: "0.68rem",
+    fontSize: "0.66rem",
     color: "#ccc",
     display: "block",
   },
@@ -399,7 +395,7 @@ const styles = {
     flex: 1,
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
+    gap: "0.4rem",
   },
   habitTrack: {
     flex: 1,
@@ -414,9 +410,9 @@ const styles = {
     transition: "width 0.5s ease",
   },
   habitPct: {
-    fontSize: "0.72rem",
+    fontSize: "0.7rem",
     fontWeight: "700",
-    width: "34px",
+    width: "32px",
     textAlign: "right",
     flexShrink: 0,
   },
@@ -430,29 +426,28 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
-    marginBottom: "0.75rem",
+    marginBottom: "0.65rem",
   },
   achBadge: {
     background: "#f3f1ff",
     color: "#6c63ff",
-    fontSize: "0.7rem",
+    fontSize: "0.68rem",
     fontWeight: "700",
     padding: "2px 8px",
     borderRadius: "20px",
   },
   achGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
     gap: "0.5rem",
   },
   achCard: {
     background: "#f8f8fb",
     borderRadius: "10px",
-    padding: "0.65rem 0.4rem",
+    padding: "0.6rem 0.4rem",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "0.25rem",
+    gap: "0.2rem",
     position: "relative",
     cursor: "default",
   },
@@ -464,19 +459,7 @@ const styles = {
     color: "#10b981",
     fontWeight: "700",
   },
-  achIcon: {
-    fontSize: "1.3rem",
-    lineHeight: 1,
-  },
-  achName: {
-    fontSize: "0.6rem",
-    color: "#888",
-    textAlign: "center",
-    lineHeight: 1.3,
-  },
-  achXp: {
-    fontSize: "0.6rem",
-    color: "#6c63ff",
-    fontWeight: "700",
-  },
+  achIcon:  { fontSize: "1.2rem", lineHeight: 1 },
+  achName:  { fontSize: "0.58rem", color: "#888", textAlign: "center", lineHeight: 1.3 },
+  achXp:    { fontSize: "0.58rem", color: "#6c63ff", fontWeight: "700" },
 };

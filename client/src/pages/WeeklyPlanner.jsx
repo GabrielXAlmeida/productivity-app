@@ -10,20 +10,15 @@ import HabitsSection from "../components/HabitsSection";
 
 dayjs.extend(isoWeek);
 
-const DAYS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
+const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-const fadeInStyle = `
+const globalStyles = `
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 `;
 
@@ -35,15 +30,21 @@ export default function WeeklyPlanner() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const weekCode = `${currentWeek.isoWeekYear()}-W${String(currentWeek.isoWeek()).padStart(2, "0")}`;
 
-  // injeta o keyframe uma vez
   useEffect(() => {
     const style = document.createElement("style");
-    style.textContent = fadeInStyle;
+    style.textContent = globalStyles;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
+  }, []);
+
+  useEffect(() => {
+    function handleResize() { setIsMobile(window.innerWidth < 768); }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -60,10 +61,7 @@ export default function WeeklyPlanner() {
   }
 
   function getTasksForDay(dayIndex) {
-    const date = currentWeek
-      .startOf("week")
-      .add(dayIndex, "day")
-      .format("YYYY-MM-DD");
+    const date = currentWeek.startOf("week").add(dayIndex, "day").format("YYYY-MM-DD");
     return tasks.filter((t) => t.scheduled_date === date);
   }
 
@@ -99,15 +97,18 @@ export default function WeeklyPlanner() {
     navigate("/login");
   }
 
+  const weekStart = currentWeek.startOf("week");
+  const weekEnd   = currentWeek.endOf("week");
+  const weekLabel = `${weekStart.format("DD/MM")} — ${weekEnd.format("DD/MM")} · ${weekStart.format("YYYY")}`;
+
   return (
     <div style={styles.page}>
+
+      {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>📅 Weekly Planner</h1>
         <div style={styles.headerActions}>
-          <button
-            style={styles.dashboardBtn}
-            onClick={() => navigate("/dashboard")}
-          >
+          <button style={styles.dashboardBtn} onClick={() => navigate("/dashboard")}>
             📊 Dashboard
           </button>
           <button style={styles.logoutBtn} onClick={handleLogout}>
@@ -119,84 +120,121 @@ export default function WeeklyPlanner() {
       {/* Tabs */}
       <div style={styles.tabs}>
         <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === "planner" ? styles.tabActive : {}),
-          }}
+          style={{ ...styles.tab, ...(activeTab === "planner" ? styles.tabActive : {}) }}
           onClick={() => setActiveTab("planner")}
         >
           📋 Planner
         </button>
         <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === "habits" ? styles.tabActive : {}),
-          }}
+          style={{ ...styles.tab, ...(activeTab === "habits" ? styles.tabActive : {}) }}
           onClick={() => setActiveTab("habits")}
         >
           🌱 Hábitos
         </button>
       </div>
 
-      {/* key={activeTab} garante remontagem e dispara o fade a cada troca */}
       <div key={activeTab} style={styles.tabContent}>
         {activeTab === "planner" && (
           <>
-            <WeekNav
-              currentWeek={currentWeek}
-              setCurrentWeek={setCurrentWeek}
-            />
+            {/* WeekNav — compacto no mobile, original no desktop */}
+            {isMobile ? (
+              <div style={styles.weekNavMobile}>
+                <button style={styles.navBtn} onClick={() => setCurrentWeek(currentWeek.subtract(1, "week"))}>
+                  ←
+                </button>
+                <span style={styles.weekLabelMobile}>{weekLabel}</span>
+                <button style={styles.navBtn} onClick={() => setCurrentWeek(currentWeek.add(1, "week"))}>
+                  →
+                </button>
+                <button style={styles.todayBtn} onClick={() => setCurrentWeek(dayjs())}>
+                  Hoje
+                </button>
+              </div>
+            ) : (
+              <WeekNav currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} />
+            )}
 
-            <div style={styles.grid}>
-              {DAYS.map((day, i) => {
-                const date = currentWeek
-                  .startOf("week")
-                  .add(i, "day")
-                  .format("YYYY-MM-DD");
-                const dayTasks = getTasksForDay(i);
-                const isToday = date === dayjs().format("YYYY-MM-DD");
+            {/* DESKTOP — grid horizontal de 7 colunas */}
+            {!isMobile && (
+              <div style={styles.grid}>
+                {DAYS.map((day, i) => {
+                  const date = currentWeek.startOf("week").add(i, "day").format("YYYY-MM-DD");
+                  const dayTasks = getTasksForDay(i);
+                  const isToday = date === dayjs().format("YYYY-MM-DD");
 
-                return (
-                  <div
-                    key={day}
-                    style={{
-                      ...styles.column,
-                      ...(isToday ? styles.todayColumn : {}),
-                    }}
-                  >
-                    <div style={styles.dayHeader}>
-                      <span style={styles.dayName}>{day}</span>
-                      <span style={styles.dayDate}>
-                        {currentWeek
-                          .startOf("week")
-                          .add(i, "day")
-                          .format("DD/MM")}
-                      </span>
+                  return (
+                    <div key={day} style={{ ...styles.column, ...(isToday ? styles.todayColumn : {}) }}>
+                      <div style={styles.dayHeader}>
+                        <span style={styles.dayName}>{day}</span>
+                        <span style={styles.dayDate}>
+                          {currentWeek.startOf("week").add(i, "day").format("DD/MM")}
+                        </span>
+                      </div>
+                      <div style={styles.taskList}>
+                        {dayTasks.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onEdit={handleEditTask}
+                            onDelete={handleDeleteTask}
+                            onComplete={handleCompleteTask}
+                            onReopen={handleReopenTask}
+                          />
+                        ))}
+                      </div>
+                      <button style={styles.addBtn} onClick={() => handleNewTask(date)}>
+                        + Adicionar
+                      </button>
                     </div>
+                  );
+                })}
+              </div>
+            )}
 
-                    <div style={styles.taskList}>
-                      {dayTasks.map((task) => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          onEdit={handleEditTask}
-                          onDelete={handleDeleteTask}
-                          onComplete={handleCompleteTask}
-                          onReopen={handleReopenTask}
-                        />
-                      ))}
+            {/* MOBILE — lista vertical */}
+            {isMobile && (
+              <div style={styles.dayList}>
+                {DAYS.map((day, i) => {
+                  const date = currentWeek.startOf("week").add(i, "day").format("YYYY-MM-DD");
+                  const dayTasks = getTasksForDay(i);
+                  const isToday = date === dayjs().format("YYYY-MM-DD");
+
+                  return (
+                    <div key={day} style={{ ...styles.dayRow, ...(isToday ? styles.todayRow : {}) }}>
+                      {/* Label lateral */}
+                      <div style={styles.dayLabel}>
+                        <span style={{ ...styles.dayLabelName, ...(isToday ? styles.todayLabelName : {}) }}>
+                          {day}
+                        </span>
+                        <span style={styles.dayLabelDate}>
+                          {currentWeek.startOf("week").add(i, "day").format("DD/MM")}
+                        </span>
+                      </div>
+
+                      {/* Conteúdo */}
+                      <div style={styles.dayContent}>
+                        {dayTasks.length === 0 && (
+                          <p style={styles.emptyDay}>Nenhuma tarefa</p>
+                        )}
+                        {dayTasks.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onEdit={handleEditTask}
+                            onDelete={handleDeleteTask}
+                            onComplete={handleCompleteTask}
+                            onReopen={handleReopenTask}
+                          />
+                        ))}
+                        <button style={styles.addBtnMobile} onClick={() => handleNewTask(date)}>
+                          + Adicionar
+                        </button>
+                      </div>
                     </div>
-
-                    <button
-                      style={styles.addBtn}
-                      onClick={() => handleNewTask(date)}
-                    >
-                      + Adicionar
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
             {modalOpen && (
               <TaskModal
@@ -224,16 +262,35 @@ const styles = {
     background: "#f0f2f5",
     padding: "1.5rem",
   },
+
+  // Header
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "1rem",
+    flexWrap: "wrap",
+    gap: "0.5rem",
   },
   headerTitle: {
     fontSize: "1.5rem",
     color: "#333",
     margin: 0,
+  },
+  headerActions: {
+    display: "flex",
+    gap: "0.5rem",
+    alignItems: "center",
+  },
+  dashboardBtn: {
+    padding: "0.4rem 1rem",
+    borderRadius: "8px",
+    border: "2px solid #6c63ff",
+    background: "transparent",
+    color: "#6c63ff",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "0.85rem",
   },
   logoutBtn: {
     padding: "0.4rem 1rem",
@@ -244,6 +301,8 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold",
   },
+
+  // Tabs
   tabs: {
     display: "flex",
     gap: "0.5rem",
@@ -268,6 +327,8 @@ const styles = {
   tabContent: {
     animation: "fadeInUp 0.2s ease",
   },
+
+  // ── DESKTOP ──────────────────────────────────────────
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(7, 1fr)",
@@ -318,19 +379,107 @@ const styles = {
     cursor: "pointer",
     fontSize: "0.8rem",
   },
-  headerActions: {
+
+  // ── MOBILE WeekNav ────────────────────────────────────
+  weekNavMobile: {
     display: "flex",
-    gap: "0.5rem",
     alignItems: "center",
+    gap: "0.4rem",
+    background: "#fff",
+    borderRadius: "12px",
+    padding: "0.6rem 0.75rem",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    marginBottom: "0.75rem",
   },
-  dashboardBtn: {
-    padding: "0.4rem 1rem",
+  weekLabelMobile: {
+    flex: 1,
+    textAlign: "center",
+    fontWeight: "600",
+    fontSize: "0.8rem",
+    color: "#333",
+  },
+  navBtn: {
+    padding: "0.35rem 0.6rem",
     borderRadius: "8px",
-    border: "2px solid #6c63ff",
-    background: "transparent",
-    color: "#6c63ff",
+    border: "1px solid #ddd",
+    background: "#fff",
+    color: "#555",
     cursor: "pointer",
-    fontWeight: "bold",
     fontSize: "0.85rem",
+  },
+  todayBtn: {
+    padding: "0.35rem 0.65rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#6c63ff",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "0.78rem",
+    fontWeight: "bold",
+  },
+
+  // ── MOBILE day list ───────────────────────────────────
+  dayList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.6rem",
+  },
+  dayRow: {
+    background: "#fff",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    display: "flex",
+    overflow: "hidden",
+  },
+  todayRow: {
+    border: "2px solid #6c63ff",
+  },
+  dayLabel: {
+    width: "76px",
+    minWidth: "76px",
+    background: "#f8f8fb",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0.75rem 0.4rem",
+    borderRight: "1px solid #eee",
+    gap: "0.2rem",
+  },
+  dayLabelName: {
+    fontSize: "0.72rem",
+    fontWeight: "700",
+    color: "#444",
+    textAlign: "center",
+  },
+  todayLabelName: {
+    color: "#6c63ff",
+  },
+  dayLabelDate: {
+    fontSize: "0.68rem",
+    color: "#aaa",
+  },
+  dayContent: {
+    flex: 1,
+    padding: "0.6rem 0.7rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.4rem",
+  },
+  emptyDay: {
+    fontSize: "0.75rem",
+    color: "#ccc",
+    margin: 0,
+  },
+  addBtnMobile: {
+    marginTop: "0.1rem",
+    padding: "0.3rem",
+    borderRadius: "8px",
+    border: "1px dashed #ddd",
+    background: "transparent",
+    color: "#bbb",
+    cursor: "pointer",
+    fontSize: "0.75rem",
+    textAlign: "left",
   },
 };
